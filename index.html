@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>정수 덧셈·뺄셈 형성평가</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        h1 { color: #333; }
+        #quiz-box {
+            margin-top: 20px;
+            border: 1px solid #aaa;
+            padding: 20px;
+            width: 400px;
+        }
+        #timer {
+            font-size: 1.4em;
+            color: #d9534f;
+            font-weight: bold;
+        }
+        #score-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #aaa;
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>정수의 덧셈·뺄셈 형성평가</h1>
+
+<label>
+    연산 선택:
+    <select id="operation">
+        <option value="add">덧셈</option>
+        <option value="sub">뺄셈</option>
+        <option value="mix">덧셈 + 뺄셈 혼합</option>
+    </select>
+</label>
+<button onclick="startQuiz()">시작하기</button>
+
+<div id="quiz-box" style="display:none;">
+    <h3 id="problem-number"></h3>
+    <div id="problem"></div>
+    <div id="timer">남은 시간: 50초</div>
+    <div>남은 기회: <span id="tries">3</span></div>
+
+    <input type="number" id="answer" placeholder="정답 입력">
+    <button onclick="submitAnswer()">제출</button>
+</div>
+
+<div id="score-box" style="display:none;"></div>
+
+<script>
+    let problems = [];
+    let currentIndex = 0;
+    let timeLeft = 50;
+    let timer;
+    let tries = 3;
+    let totalScore = 0;
+
+    // 범위: -9 ~ 9
+    function randInt() {
+        return Math.floor(Math.random() * 19) - 9;
+    }
+
+    function generateProblems(op) {
+        const list = [];
+
+        for (let i = 0; i < 10; i++) {
+            let a = randInt();
+            let b = randInt();
+            let operator;
+
+            if (op === "add") operator = "+";
+            else if (op === "sub") operator = "-";
+            else operator = Math.random() < 0.5 ? "+" : "-";
+
+            let answer = operator === "+" ? a + b : a - b;
+
+            list.push({ a, b, operator, answer });
+        }
+        return list;
+    }
+
+    function startQuiz() {
+        const op = document.getElementById("operation").value;
+        problems = generateProblems(op);
+
+        currentIndex = 0;
+        totalScore = 0;
+
+        document.getElementById("score-box").style.display = "none";
+        document.getElementById("quiz-box").style.display = "block";
+
+        loadProblem();
+    }
+
+    function loadProblem() {
+        if (currentIndex >= problems.length) {
+            endQuiz();
+            return;
+        }
+
+        tries = 3;
+        timeLeft = 50;
+
+        const p = problems[currentIndex];
+        document.getElementById("problem-number").innerText = `문제 ${currentIndex + 1} / 10`;
+        document.getElementById("problem").innerText = 
+            `${p.a} ${p.operator} ${p.b} = ?`;
+        document.getElementById("tries").innerText = tries;
+        document.getElementById("answer").value = "";
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timer").innerText = `남은 시간: ${timeLeft}초`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                alert("시간 초과! 오답 처리됩니다.");
+                nextProblem();
+            }
+        }, 1000);
+    }
+
+    function submitAnswer() {
+        const userAns = Number(document.getElementById("answer").value);
+        const correct = problems[currentIndex].answer;
+
+        if (userAns === correct) {
+            clearInterval(timer);
+            totalScore += timeLeft;
+            alert(`정답! +${timeLeft}점`);
+            nextProblem();
+        } else {
+            tries--;
+            document.getElementById("tries").innerText = tries;
+
+            if (tries > 0) {
+                alert(`오답! 남은 기회: ${tries}`);
+            } else {
+                clearInterval(timer);
+                alert(`오답! 정답은 ${correct} 입니다.`);
+                nextProblem();
+            }
+        }
+    }
+
+    function nextProblem() {
+        currentIndex++;
+        loadProblem();
+    }
+
+    function endQuiz() {
+        clearInterval(timer);
+        document.getElementById("quiz-box").style.display = "none";
+
+        document.getElementById("score-box").style.display = "block";
+        document.getElementById("score-box").innerHTML =
+            `<h2>평가 종료</h2>
+             <p>총점: <strong>${totalScore}</strong></p>`;
+    }
+</script>
+
+</body>
+</html>
